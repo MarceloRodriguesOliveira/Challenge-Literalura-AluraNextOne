@@ -7,6 +7,7 @@ import com.alura.literalura.dto.RequestDto;
 import com.alura.literalura.dto.ResponseDto;
 import com.alura.literalura.entity.Author;
 import com.alura.literalura.entity.Book;
+import com.alura.literalura.repository.AuthorRepository;
 import com.alura.literalura.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,27 @@ import java.util.Scanner;
 public class BookService {
     private final BookRepository bookRepository;
     private final Scanner SCANNER = new Scanner(System.in);
+    private final AuthorRepository authorRepository;
 
-    public void findByTitle() throws IOException, InterruptedException {
+    public void printBook(Book book){
+        System.out.println("--- LIVRO ---");
+        System.out.println("Titulo: " + book.getTitle());
+        System.out.println("Autor: " + book.getAuthor().getName());
+        System.out.println("Idioma: " + book.getLanguage());
+        System.out.println("Numero de downloads: " + book.getDownload_count());
+        System.out.println();
+    }
+
+    public void printAuthor(Author author){
+        System.out.println("--- AUTOR ---");
+        System.out.println("Autor: " + author.getName());
+        System.out.println("Ano de nascimento: " + author.getBirthYear());
+        System.out.println("Ano de morte: " + author.getDeathYear());
+        System.out.println("Livros: " + author.getBooks().get(0).getTitle());
+        System.out.println();
+    }
+
+    public void findByTitleAndSave() throws IOException, InterruptedException {
         System.out.println("Insira o nome do livra que você deseja procurar");
         String title = SCANNER.nextLine();
 
@@ -38,21 +58,82 @@ public class BookService {
             return;
         }
 
-        BookDto book = response.results().get(0);
+        BookDto bookDto = response.results().get(0);
+        AuthorDto authorDto = bookDto.authors().get(0);
 
-        AuthorDto authorDto = book.authors().get(0);
+        Author author = authorRepository.findByName(authorDto.name())
+                .orElseGet(()-> {
+                    Author newAuthor = new Author(authorDto.name(), authorDto.birth_year(), authorDto.death_year());
+                    return authorRepository.save(newAuthor);
+                });
 
-        Author author = new Author(authorDto.name(), authorDto.birth_year(), authorDto.death_year());
+        Book book = new Book(bookDto.id(), bookDto.title(), bookDto.languages().get(0), bookDto.download_count(), author);
 
+        printBook(book);
 
-        Book bookFromApi = new Book(book.id(), book.title(), book.languages().get(0), book.download_count(), author);
+        if(bookRepository.findByTitle(bookDto.title()).isPresent()){
+            System.out.println("Livro já registrado");
+            return;
+        }
 
-        System.out.println("--- LIVRO ---");
-        System.out.println("Titulo: "+ bookFromApi.getTitle());
-        System.out.println("Autor: "+bookFromApi.getAuthor().getName());
-        System.out.println("Idioma: "+ bookFromApi.getLanguage());
-        System.out.println("Numero de downloads: "+ bookFromApi.getDownload_count());
-
+        bookRepository.save(book);
     }
+
+    public void listBooks(){
+        List<Book> books = bookRepository.findAll();
+
+        if(books.isEmpty()){
+            System.out.println("Nenhum livro registrado...");
+            return;
+        }
+
+        books.forEach(this::printBook);
+    }
+
+    public void listAuthors(){
+        List<Author> authors = authorRepository.findAll();
+
+        if(authors.isEmpty()){
+            System.out.println("Sem autores registrados...");
+            return;
+        }
+
+        authors.forEach(this::printAuthor);
+    }
+
+    public void listByActivityInYear(){
+        System.out.println("Insira o ano que deseja pesquisar");
+        Integer year = Integer.parseInt(SCANNER.nextLine());
+
+        List<Author> authors = authorRepository.findByBirthYearLessThanEqualAndDeathYearGreaterThanEqual(year, year);
+
+        if(authors.isEmpty()){
+            System.out.println("Nenhum autor encontrado vivo nesse ano.");
+            return;
+        }
+
+        authors.forEach(this::printAuthor);
+    }
+
+    public void listByLanguage(){
+        System.out.println("Insira o idioma para realizar a busca:");
+        System.out.println("es - espanhol");
+        System.out.println("en - inglês");
+        System.out.println("fr - francês");
+        System.out.println("pt - português");
+
+        String languageCode = SCANNER.nextLine();
+
+        List<Book> books = bookRepository.findByLanguage(languageCode);
+
+        if(books.isEmpty()){
+            System.out.println("Sem livros registrados com esse idioma");
+            return;
+        }
+
+        books.forEach(this::printBook);
+    }
+
+
 
 }
