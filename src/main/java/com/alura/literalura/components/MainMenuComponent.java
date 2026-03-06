@@ -25,7 +25,11 @@ public class MainMenuComponent {
            menuOption = Integer.parseInt(scanner.nextLine());
 
            switch (menuOption){
-               case 1 -> {bookService.findByTitle(); break;}
+               case 1 -> {bookService.findByTitleAndSave(); break;}
+               case 2 -> {bookService.listBooks(); break;}
+               case 3 -> {bookService.listAuthors();}
+               case 4 -> {bookService.listByActivityInYear();}
+               case 5 -> {bookService.listByLanguage();}
                default -> {
                    System.out.println("Sem outras operações por enquanto...");
                }
