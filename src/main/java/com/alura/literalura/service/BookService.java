@@ -1,5 +1,6 @@
 package com.alura.literalura.service;
 
+import com.alura.literalura.InputReader;
 import com.alura.literalura.connection.ApiConnection;
 import com.alura.literalura.dto.AuthorDto;
 import com.alura.literalura.dto.BookDto;
@@ -22,8 +23,9 @@ import java.util.Scanner;
 @RequiredArgsConstructor
 public class BookService {
     private final BookRepository bookRepository;
-    private final Scanner SCANNER = new Scanner(System.in);
+    //private final Scanner SCANNER = new Scanner(System.in);
     private final AuthorRepository authorRepository;
+    private final InputReader inputReader;
 
     public void printBook(Book book){
         System.out.println("--- LIVRO ---");
@@ -45,7 +47,7 @@ public class BookService {
 
     public void findByTitleAndSave() throws IOException, InterruptedException {
         System.out.println("Insira o nome do livra que você deseja procurar");
-        String title = SCANNER.nextLine();
+        String title = inputReader.readString();
 
         RequestDto request = new RequestDto(title);
 
@@ -103,7 +105,7 @@ public class BookService {
 
     public void listByActivityInYear(){
         System.out.println("Insira o ano que deseja pesquisar");
-        Integer year = Integer.parseInt(SCANNER.nextLine());
+        Integer year = inputReader.readInt();
 
         List<Author> authors = authorRepository.findByBirthYearLessThanEqualAndDeathYearGreaterThanEqual(year, year);
 
@@ -122,7 +124,7 @@ public class BookService {
         System.out.println("fr - francês");
         System.out.println("pt - português");
 
-        String languageCode = SCANNER.nextLine();
+        String languageCode = inputReader.readString();
 
         List<Book> books = bookRepository.findByLanguage(languageCode);
 
